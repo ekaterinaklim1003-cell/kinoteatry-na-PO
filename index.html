@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Кинотеатры на ПО</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .hint {
+      position: fixed;
+      top: 8px;
+      left: 12px;
+      font-size: 11px;
+      color: #c00;
+      background: rgba(255,255,255,0.9);
+      padding: 4px 8px;
+      border-radius: 4px;
+      z-index: 1000;
+    }
+
+    .logo-fixed {
+      position: fixed;
+      top: 8px;
+      right: 12px;
+      z-index: 1000;
+    }
+
+    .logo-fixed img {
+      height: 120px;
+    }
+
+    .search-container {
+      max-width: 400px;
+      margin: 0 auto 10px auto;
+      text-align: center;
+    }
+
+    .search-container input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    .controls {
+      max-width: 400px;
+      margin: 0 auto 10px auto;
+      text-align: center;
+    }
+
+    .controls button {
+      padding: 8px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      border: 1px solid #888;
+      border-radius: 4px;
+      background: #fff;
+    }
+
+    .scroll-top {
+      overflow-x: auto;
+      overflow-y: hidden;
+      max-width: 100%;
+      margin: 0 auto 5px auto;
+    }
+
+    .scroll-top-inner {
+      height: 1px;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      overflow-y: auto;
+      background: #fff;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      max-height: 80vh;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 2200px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px 8px;
+      font-size: 12px;
+      vertical-align: top;
+    }
+
+    th {
+      background-color: #f0f0f0;
+      font-weight: 600;
+      text-align: left;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+
+    tr.hide {
+      display: none;
+    }
+
+    /* Первый столбец — светло-жёлтый */
+    td:first-child {
+      background-color: #fff9c4;
+    }
+
+    /* Бледно-голубые служебные столбцы (можно подстроить) */
+    td:nth-child(3),
+    td:nth-child(4),
+    td:nth-child(8),
+    td:nth-child(14),
+    td:nth-child(16),
+    td:nth-child(17) {
+      background-color: #e8f4ff;
+    }
+
+    /* Подсветка по Alt-клику */
+    td.highlight {
+      background-color: #ffcccc;
+    }
+
+    /* Ярко-красная подсветка долга за ПО (2-й столбец, когда не пустой) */
+    td.debt-cell {
+      background-color: #ff4d4d;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* Жирные вертикальные разделители после A, C, D, G, I, M, P */
+    th:nth-child(1),
+    td:nth-child(1),
+    th:nth-child(3),
+    td:nth-child(3),
+    th:nth-child(4),
+    td:nth-child(4),
+    th:nth-child(7),
+    td:nth-child(7),
+    th:nth-child(9),
+    td:nth-child(9),
+    th:nth-child(13),
+    td:nth-child(13),
+    th:nth-child(16),
+    td:nth-child(16) {
+      border-right: 3px solid #000;
+    }
+
+    /* Жирные вертикальные разделители после R, T, V, X (условия сервисов) */
+    th:nth-child(18),
+    td:nth-child(18),
+    th:nth-child(20),
+    td:nth-child(20),
+    th:nth-child(22),
+    td:nth-child(22),
+    th:nth-child(24),
+    td:nth-child(24) {
+      border-right: 3px solid #000;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="hint">
+    для выделения ячейки цветом, зажми Alt и кликни мышкой
+  </div>
+
+  <div class="logo-fixed">
+    <img src="./logo.jpg" alt="Премьер Зал">
+  </div>
+
+  <h1>Кинотеатры на ПО</h1>
+
+  <div class="search-container">
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Поиск по кинотеатру..."
+    />
+  </div>
+
+  <div class="controls">
+    <button id="addRowBtn">Добавить кинотеатр</button>
+  </div>
+
+  <div class="scroll-top" id="scrollTop"></div>
+
+  <div class="table-wrapper" id="tableWrapper">
+    <table id="cinemaTable">
+      <thead>
+        <tr>
+          <th>Кинотеатр</th>                         <!-- A 1 -->
+          <th>Долг за ПО</th>                        <!-- B 2 -->
+          <th>ИНН</th>                               <!-- C 3 -->
+          <th>Репертуарное планирование</th>         <!-- D 4 -->
+          <th>Лицензионный договор</th>             <!-- E 5 -->
+          <th>Условия договора</th>                 <!-- F 6 -->
+          <th>Срок действия договора</th>           <!-- G 7 -->
+          <th>Договор на разовую лицензию</th>      <!-- H 8 -->
+          <th>Дата договора</th>                    <!-- I 9 -->
+          <th>Кол-во касс</th>                      <!-- J 10 -->
+          <th>Дата обновления ПО</th>               <!-- K 11 -->
+          <th>Версия ПО</th>                        <!-- L 12 -->
+          <th>Срок действия лицензии</th>           <!-- M 13 -->
+          <th>Договор на виджет</th>                <!-- N 14 -->
+          <th>Условия договора (виджет)</th>        <!-- O 15 -->
+          <th>Договор на виджет ПП</th>             <!-- P 16 -->
+          <th>Договор на ТП</th>                    <!-- Q 17 -->
+          <th>Условия договора (ТП)</th>            <!-- R 18 -->
+          <th>Яндекс договор</th>                   <!-- S 19 -->
+          <th>Условия договора (Яндекс)</th>        <!-- T 20 -->
+          <th>Рамблер договор</th>                  <!-- U 21 -->
+          <th>Условия договора (Рамблер)</th>       <!-- V 22 -->
+          <th>МТС договор</th>                      <!-- W 23 -->
+          <th>Условия договора (МТС)</th>           <!-- X 24 -->
+          <th>Киноплан</th>                         <!-- Y 25 -->
+          <th>Условия договора (Киноплан)</th>      <!-- Z 26 -->
+        </tr>
+      </thead>
+      <tbody>
+     <tr><td>17 Мгновений (г. Гвардейск)</td><td contenteditable="true"></td><td contenteditable="true">3916500215</td><td contenteditable="true">Подписан</td><td contenteditable="true">Подписан</td><td contenteditable="true">7 000 руб.</td><td contenteditable="true">31.12.2025</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true">Нет</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true">Нет</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+<tr><td>Kinolife Районный дом культуры (г.Лаишево)</td><td contenteditable="true"></td><td contenteditable="true">1624002353</td><td contenteditable="true">Не подписан</td><td contenteditable="true">Не подписан</td><td contenteditable="true">4 000 руб. Но не больше, чем 36 000 руб.</td><td contenteditable="true">31.12.2025</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true">Не подписан</td><td contenteditable="true">Виджет и МП: 5%</td><td contenteditable="true"></td><td contenteditable="true">Нет</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+<tr><td>Magic Cinema2 (п. Птицефабрики)</td><td contenteditable="true"></td><td contenteditable="true">502906771144</td><td contenteditable="true">Подписан</td><td contenteditable="true">Подписан</td><td contenteditable="true">4 500 руб.</td><td contenteditable="true">31.12.2026</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true">Нет</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true">Нет</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+<tr><td>RiAL film 1 (г. Чернушка)</td><td contenteditable="true"></td><td contenteditable="true">595701303130</td><td contenteditable="true">Подписан</td><td contenteditable="true">Подписан</td><td contenteditable="true">3 500 руб.</td><td contenteditable="true">31.12.2026</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true">Не подписан</td><td contenteditable="true">Виджет и МП: 5%</td><td contenteditable="true"></td><td contenteditable="true">Нет</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+<tr><td>StarmaxCinema г.Кемерово</td><td contenteditable="true"></td><td contenteditable="true">4205331593</td><td contenteditable="true">Нет</td><td contenteditable="true">Нет</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true">Подписан</td><td contenteditable="true">Виджет и МП: 4%</td><td contenteditable="true"></td><td contenteditable="true">Нет</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+    </tbody>
+    </table>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const table = document.getElementById('cinemaTable');
+    const tbody = table.querySelector('tbody');
+    const tableWrapper = document.getElementById('tableWrapper');
+    const scrollTopDiv = document.getElementById('scrollTop');
+
+    function getRows() {
+      return Array.from(tbody.querySelectorAll('tr'));
+    }
+
+    // Фильтр по названию кинотеатра
+    searchInput.addEventListener('input', function (e) {
+      const q = e.target.value.toLowerCase().trim();
+      const rows = getRows();
+
+      rows.forEach((row) => {
+        const cinemaCell = row.querySelector('td');
+        const cinemaName = cinemaCell ? cinemaCell.textContent.toLowerCase() : '';
+        const match = cinemaName.includes(q);
+        row.classList.toggle('hide', !match);
+      });
+    });
+
+    // Сортировка по алфавиту по первому столбцу
+    function sortTableByCinema() {
+      const rows = getRows();
+
+      rows.sort((a, b) => {
+        const nameA = a.cells[0].textContent.trim();
+        const nameB = b.cells[0].textContent.trim();
+        return nameA.localeCompare(nameB, 'ru', { sensitivity: 'base' });
+      });
+
+      rows.forEach(row => tbody.appendChild(row));
+    }
+
+    const addRowBtn = document.getElementById('addRowBtn');
+
+    addRowBtn.addEventListener('click', () => {
+      const newRow = document.createElement('tr');
+
+      const cinemaCell = document.createElement('td');
+      cinemaCell.contentEditable = 'true';
+      newRow.appendChild(cinemaCell);
+
+      // ещё 25 столбцов (B–Z)
+      for (let i = 0; i < 25; i++) {
+        const cell = document.createElement('td');
+        cell.contentEditable = 'true';
+        newRow.appendChild(cell);
+      }
+
+      tbody.appendChild(newRow);
+      sortTableByCinema();
+      updateScrollInnerWidth();
+      updateDebtHighlightForRow(newRow);
+    });
+
+    // Подсветка по Alt+клику
+    table.addEventListener('click', (e) => {
+      const cell = e.target.closest('td');
+      if (!cell) return;
+      if (e.altKey) {
+        cell.classList.toggle('highlight');
+      }
+    });
+
+    // Подсветка долга за ПО (2-й столбец)
+    function updateDebtHighlightForRow(row) {
+      const debtCell = row.cells[1];
+      if (!debtCell) return;
+      const hasText = debtCell.textContent.trim().length > 0;
+      debtCell.classList.toggle('debt-cell', hasText);
+    }
+
+    function updateAllDebtHighlights() {
+      getRows().forEach(updateDebtHighlightForRow);
+    }
+
+    table.addEventListener('input', (e) => {
+      const cell = e.target.closest('td');
+      if (!cell) return;
+      const row = cell.parentElement;
+      const cellIndex = Array.prototype.indexOf.call(row.cells, cell);
+      if (cellIndex === 1) {
+        updateDebtHighlightForRow(row);
+      }
+    });
+
+    // Верхний бегунок
+    const scrollInner = document.createElement('div');
+    scrollInner.className = 'scroll-top-inner';
+    scrollTopDiv.appendChild(scrollInner);
+
+    function updateScrollInnerWidth() {
+      scrollInner.style.width = table.offsetWidth + 'px';
+    }
+
+    updateScrollInnerWidth();
+    window.addEventListener('resize', updateScrollInnerWidth);
+
+    scrollTopDiv.addEventListener('scroll', () => {
+      tableWrapper.scrollLeft = scrollTopDiv.scrollLeft;
+    });
+
+    tableWrapper.addEventListener('scroll', () => {
+      scrollTopDiv.scrollLeft = tableWrapper.scrollLeft;
+    });
+
+    sortTableByCinema();
+    updateAllDebtHighlights();
+  </script>
+</body>
+</html>
